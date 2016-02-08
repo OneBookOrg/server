@@ -9,7 +9,7 @@ var cookieParser = require('cookie-parser')
 const session = require('express-session');
 const MongoStore = require('connect-mongo')(session);
 var app = express();
-app.use(express.static('../site'));
+app.use(express.static('../web/site'));
 
 var debug = false;
 
