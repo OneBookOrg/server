@@ -347,6 +347,24 @@ app.post('/addUserClass', restrict, function(req, res){
 
 });
 
+app.get('/findClassmates/:searchID', function(req, res){
+	console.log(req.params.searchID)
+	User.find({'userClasses.classID' : req.params.searchID}, {'username' : 1}, function(err, users){
+		if(err){
+			res.json({
+				success : false,
+				errMessage : "Error finding users in that specific class"
+			});
+			return;
+		}
+		res.json({
+			success : true,
+			users : users
+		});
+
+	});
+});
+
 
 
 
