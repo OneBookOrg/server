@@ -9,6 +9,9 @@ var userSchema = new Schema ({
 	userOrgs : [
 
 	],
+	userClasses : [
+	
+	],
 	phone_number : Number,
 	hashcode : String,
 	//Using register_date as salt val
