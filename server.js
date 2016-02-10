@@ -117,6 +117,15 @@ app.post('/register', function(req, res){
 
 app.post('/login', function(req, res){
 
+	if(!req.body.username || !req.body.password){
+		res.json({
+			success : false,
+			errMessage : "No username or password provided"
+		});
+
+		return;
+	}
+
 	authenticate(req.body.username, req.body.password, function(err, user){
 		if(user){
 			req.session.regenerate(function(){
@@ -298,6 +307,44 @@ app.get('/logout', function(req, res){
   	});
 
   });
+});
+
+app.post('/addUserClass', restrict, function(req, res){
+
+	if(!req.body.classID){
+		res.json({
+			success : false,
+			errMessage : "No Class ID provided"
+		});
+		console.log("No class ID provided");
+		return;
+	}
+	else{
+		var newClass = {
+			classID : req.body.classID,
+			classDesc : ''
+		}
+
+		if(req.body.classDesc){
+			newClass.classDesc = req.body.classDesc
+		}
+		
+		User.update({username : req.session.user.username}, {$addToSet : {userClasses : newClass}}, function(err, result){
+			if(err){
+				console.log("ERROR updating user class Info. " + err);
+				res.json({
+					success : false,
+					errMessage : "Could not update user."
+				});
+				return;
+			}
+			res.json({
+				success : true
+			});
+		});
+	
+	}
+
 });
 
 
