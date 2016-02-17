@@ -161,7 +161,6 @@ app.post('/createOrg', restrict, function(req, res){
 	tempSalt = org.create_date.toString().replace(/\s+/g, '');
 	//If there is no password on this org
 	if(!req.body.password){
-		org.passwordProt = true;
 		org.save(function(err){
 			if(err){
 				res.json({
@@ -182,6 +181,7 @@ app.post('/createOrg', restrict, function(req, res){
 				}
 			});
 
+			console.log("Successfully created organization " +org.orgname);
 			res.json({
 				success : true
 			});
@@ -190,6 +190,7 @@ app.post('/createOrg', restrict, function(req, res){
 	}
 	//Org is password protected it
 	else{
+		org.passwordProt = true;
 		hash(req.body.password, tempSalt, function(err, hash){
 			if(err) return err;
 				org.hashcode = hash.toString('hex');
@@ -213,7 +214,7 @@ app.post('/createOrg', restrict, function(req, res){
 						return;
 					}
 				});
-
+				console.log("Successfully created organization " +org.orgname);
 				res.json({
 					success : true
 				});
