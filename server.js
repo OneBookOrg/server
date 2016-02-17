@@ -152,35 +152,77 @@ app.post('/login', function(req, res){
 app.post('/createOrg', restrict, function(req, res){
 	var org = new Org ({
 		orgname : req.body.orgname,
-		members : [req.session.user.username]
+		members : [req.session.user.username],
+		hashcode : "",
+		create_date: Date.now()
 	});
 
-	org.save(function(err){
-		if(err){
-			res.json({
-				success : false,
-				error : 'Organization already exists'
-			});
-			return;
-		}
-
-
-		User.update({username : req.session.user.username}, {$addToSet : {userOrgs : org}}, function(err, result){
+	tempSalt = org.create_date.toString().replace(/\s+/g, '');
+	//If there is no password on this org
+	if(!req.body.password){
+		org.save(function(err){
 			if(err){
-				console.log("ERROR updating user info. " + err);
 				res.json({
 					success : false,
-					errMessage : "Could not update user."
+					error : 'Organization already exists'
 				});
 				return;
 			}
-		});
 
-		res.json({
-			success : true
+			User.update({username : req.session.user.username}, {$addToSet : {userOrgs : org}}, function(err, result){
+				if(err){
+					console.log("ERROR updating user info. " + err);
+					res.json({
+						success : false,
+						errMessage : "Could not update user."
+					});
+					return;
+				}
+			});
+
+			res.json({
+				success : true
+			});
+			return;
 		});
-		return;
+	}
+	//Org is password protected it
+	else{
+		hash(req.body.password, tempSalt, function(err, hash){
+			if(err) return err;
+				org.hashcode = hash.toString('hex');
+
+			org.save(function(err){
+				if(err){
+					res.json({
+						success : false,
+						error : 'Organization already exists'
+					});
+					return;
+				}
+
+				User.update({username : req.session.user.username}, {$addToSet : {userOrgs : org}}, function(err, result){
+					if(err){
+						console.log("ERROR updating user info. " + err);
+						res.json({
+							success : false,
+							errMessage : "Could not update user."
+						});
+						return;
+					}
+				});
+
+				res.json({
+					success : true
+				});
+				return;
+			});
+
 	});
+	}
+	
+
+	
 });
 
 app.post('/addUserToOrg', restrict, function(req, res){
@@ -194,6 +236,8 @@ app.post('/addUserToOrg', restrict, function(req, res){
 			return;
 		}
 		else{
+			//Need to check if password matches
+
 			Org.update({orgname : org.orgname}, {$addToSet : {members : req.session.user.username}}, function(err){
 				if(err){
 					console.log("ERROR updating organization member "+ err);
