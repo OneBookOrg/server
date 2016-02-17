@@ -154,12 +154,14 @@ app.post('/createOrg', restrict, function(req, res){
 		orgname : req.body.orgname,
 		members : [req.session.user.username],
 		hashcode : "",
-		create_date: Date.now()
+		create_date: Date.now(),
+		passwordProt : false
 	});
 
 	tempSalt = org.create_date.toString().replace(/\s+/g, '');
 	//If there is no password on this org
 	if(!req.body.password){
+		org.passwordProt = true;
 		org.save(function(err){
 			if(err){
 				res.json({
