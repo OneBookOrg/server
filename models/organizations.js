@@ -6,7 +6,10 @@ var organizationSchema = new Schema ({
 		type :String,
 		unique : true
 	},
-	members : []
+	members : [],
+	hashcode : String,
+	create_date : Date,
+	passwordProt : false
 });
 
 mongoose.model('organizations', organizationSchema);
