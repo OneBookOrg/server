@@ -51,18 +51,33 @@ function authenticate (name, pass, fn){
 			tempSalt = user.register_date.toString().replace(/\s+/g, '');
 			hash(pass, tempSalt, function(err, hash){
 
-				if(err) 
-					return fn(err, null);
-				if(hash.toString('hex') == user.hashcode)
-					return fn(null, user);
-				else{
+				if(hash.toString('hex') == user.hashcode){
+				 	return fn(null, user); 
+				} 
+				else {
 					return fn(err, null);
 				}
+				
 			});
 		}
 	});
 	//fn(new Error('User hashcodes do not match. Invalid Password'));
 } 
+
+function authenticateOrg(org, pass, fn){
+	
+	tempSalt = org.create_date.toString().replace(/\s+/g, '');
+	hash(pass, tempSalt, function(err, hash){
+		if(org.hashcode == hash.toString('hex')){
+			return fn(null);
+		}
+		else{
+			return fn(new Error('Passwords do not match'));
+		}
+	});
+
+}
+
 
 function restrict(req, res, next) {
   if (req.session.user) {
@@ -158,7 +173,7 @@ app.post('/createOrg', restrict, function(req, res){
 		passwordProt : false
 	});
 
-	tempSalt = org.create_date.toString().replace(/\s+/g, '');
+	
 	//If there is no password on this org
 	if(!req.body.password){
 		org.save(function(err){
@@ -191,6 +206,7 @@ app.post('/createOrg', restrict, function(req, res){
 	//Org is password protected it
 	else{
 		org.passwordProt = true;
+		tempSalt = org.create_date.toString().replace(/\s+/g, '');
 		hash(req.body.password, tempSalt, function(err, hash){
 			if(err) return err;
 				org.hashcode = hash.toString('hex');
@@ -229,18 +245,67 @@ app.post('/createOrg', restrict, function(req, res){
 });
 
 app.post('/addUserToOrg', restrict, function(req, res){
-	
-	Org.findOne({orgname : req.body.orgName}, function(err, org){
-		if(err){
+	Org.findOne({'orgname' : req.body.orgName}, function(err, org){
+		if(!org){
+			console.log("Error, org does not exist.");
 			res.json({
 				success : false,
-				errMessage : "No organization by the name " + req.body.orgName
+				errMessage : "Org does not exists"
 			});
 			return;
 		}
-		else{
-			//Need to check if password matches
+		//Org is password protected
+		else if(org.passwordProt){
+			if(!req.body.password){
+				console.log("No Password Provided.");
+				res.json({
+					success : false,
+					errMessage : "No password provided."
+				});
+				return;
+			}
 
+			authenticateOrg(org, req.body.password, function(err){
+				if(err){
+					console.log("Password does not match the org password.");
+					res.json({
+						success : false,
+						errMessage : "Password does not match org password."
+					});
+					return;
+				}
+				else{
+					Org.update({orgname : org.orgname}, {$addToSet : {members : req.session.user.username}}, function(err){
+						if(err){
+							console.log("ERROR updating organization member "+ err);
+							res.json({
+								success : false,
+								errMessage : "ERROR updating organization member."
+							});
+							return;
+						}
+						else{
+							
+							User.update({username : req.session.user.username}, {$addToSet : {userOrgs : org}}, function(err, result){
+								if(err){
+									console.log("ERROR updating user info. " + err);
+									res.json({
+										success : false,
+										errMessage : "Could not update user."
+									});
+									return;
+								}
+								res.json({
+									success : true
+								});
+							});
+						}
+					});
+				}
+			});
+		}
+		//No password for the organization
+		else{
 			Org.update({orgname : org.orgname}, {$addToSet : {members : req.session.user.username}}, function(err){
 				if(err){
 					console.log("ERROR updating organization member "+ err);
@@ -266,13 +331,15 @@ app.post('/addUserToOrg', restrict, function(req, res){
 						});
 					});
 				}
-			});
-	
+			});	
 		}
 
 	});
-
 });
+
+
+
+
 
 app.get('/userInfo', restrict, function(req, res){
 	User.findOne( {'username' : req.session.user.username}, function(err, user){
