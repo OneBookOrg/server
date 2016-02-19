@@ -423,9 +423,23 @@ app.get('/logout', function(req, res){
   });
 });
 
+
+/*
+	When calling /addUserClass the data must be passed in this specific format:
+	{
+	  "newClass":[
+	      {"classID":"PHY1234", "classDesc":"Physics I"}, 
+	      {"classID":"ABC3456", "classDesc":"ABC Class"},
+	      {"classID":"PHY1234"}
+	  ]
+	}
+
+	ClassID is mandatory but classDesc is optional.
+*/
+
 app.post('/addUserClass', restrict, function(req, res){
 
-	if(!req.body.classID){
+	if(!req.body.classID && false){
 		res.json({
 			success : false,
 			errMessage : "No Class ID provided"
@@ -434,28 +448,42 @@ app.post('/addUserClass', restrict, function(req, res){
 		return;
 	}
 	else{
-		var newClass = {
-			classID : req.body.classID,
-			classDesc : ''
-		}
 
-		if(req.body.classDesc){
-			newClass.classDesc = req.body.classDesc
-		}
+
+		var classArr = [];
+		var length = req.body.newClass.length;
 		
-		User.update({username : req.session.user.username}, {$addToSet : {userClasses : newClass}}, function(err, result){
-			if(err){
-				console.log("ERROR updating user class Info. " + err);
-				res.json({
-					success : false,
-					errMessage : "Could not update user."
-				});
-				return;
+		for(var i = 0; i<length; i++){
+			var newClass = {
+				classID : req.body.newClass[i].classID,
+				classDesc : ""
 			}
+			if(req.body.newClass[i].classDesc){
+				newClass.classDesc = req.body.newClass[i].classDesc
+			}
+			classArr.push(newClass);
+		} 
+
+		classArr.forEach(function(classEntry){
+			User.update({username : req.session.user.username}, {$addToSet : {userClasses : classEntry}}, function(err, result){
+				if(err){
+					console.log("ERROR updating user class Info. " + err);
+					res.json({
+						success : false,
+						errMessage : "Could not update user."
+					});
+					return;
+				}
+
+			});
+
+		});
+
+		console.log("Success adding users classes.");
 			res.json({
 				success : true
 			});
-		});
+		
 	
 	}
 
