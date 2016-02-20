@@ -6,6 +6,10 @@ var userSchema = new Schema ({
 		type : String,
 		unique : true
 	},
+	display_name : {
+		type : String,
+		unique : true
+	},
 	userOrgs : [
 
 	],
