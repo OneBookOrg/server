@@ -6,6 +6,10 @@ var organizationSchema = new Schema ({
 		type :String,
 		unique : true
 	},
+	org_display_name : {
+		type : String,
+		unique : true
+	},
 	members : [],
 	hashcode : String,
 	create_date : Date,
