@@ -94,9 +94,22 @@ function restrict(req, res, next) {
   }
 }
 
+
+/*
+	When calling /register the data passed in must be with the formatting and naming below
+	{
+		username : "",
+		password : "",
+		phone_number : ""
+	}
+
+	returns a json object with a success flag.
+*/
+
 app.post('/register', function(req, res){
 	var user = new User ({
-		username : req.body.username,
+		username : req.body.username.toLowerCase(), //Not case sensitive
+		display_name : req.body.username,
 		hashcode : "",
 		phone_number : req.body.phone_number, //Change phone numbers to a default format easy for searching
 		register_date : Date.now()
@@ -130,6 +143,15 @@ app.post('/register', function(req, res){
 
 });
 
+/*
+	/login must pass the username and password in to be a valid request
+	{
+		username : "",
+		password : ""
+	}
+
+	returns a json object with a success flag
+*/
 app.post('/login', function(req, res){
 
 	if(!req.body.username || !req.body.password){
@@ -141,7 +163,7 @@ app.post('/login', function(req, res){
 		return;
 	}
 
-	authenticate(req.body.username, req.body.password, function(err, user){
+	authenticate(req.body.username.toLowerCase(), req.body.password, function(err, user){
 		if(user){
 			req.session.regenerate(function(){
 		        req.session.user = user;
@@ -163,10 +185,27 @@ app.post('/login', function(req, res){
 	});
 })
 
+/*
+	/createOrg will create a new organization and add the user to the organization 
+	must take in the following data to be a valid request:
+	
+	if password protected:
+	{
+		orgname : "",
+	}
+	if no password protection:
+	{
+		orgname : "",
+		password : ""
+	}
 
+	returns a json object with a success flag
+
+*/
 app.post('/createOrg', restrict, function(req, res){
 	var org = new Org ({
-		orgname : req.body.orgname,
+		orgname : req.body.orgname.toLowerCase(),
+		org_display_name : req.body.orgname,
 		members : [req.session.user.username],
 		hashcode : "",
 		create_date: Date.now(),
@@ -244,8 +283,26 @@ app.post('/createOrg', restrict, function(req, res){
 	
 });
 
+/*
+
+	/addUserToOrg will first authenticate the organization with the passwordword provided, then if 
+	the authentication is successful it needs the following data:
+
+	if organization is password protected:
+	{
+		orgName : "",
+		password : ""
+	}
+	if no password protection:
+	{
+		orgName : ""
+	}
+
+	returns a json object with a success flag
+
+*/
 app.post('/addUserToOrg', restrict, function(req, res){
-	Org.findOne({'orgname' : req.body.orgName}, function(err, org){
+	Org.findOne({'orgname' : req.body.orgName.toLowerCase()}, function(err, org){
 		if(!org){
 			console.log("Error, org does not exist.");
 			res.json({
@@ -339,8 +396,12 @@ app.post('/addUserToOrg', restrict, function(req, res){
 
 
 
+/*
+	/userInfo does not need any data. It will return the users information based on 
+	their current session. If no session is found, false is returned.
+	If the user has a session a json object is returned with a success flag and a user object named user.
 
-
+*/
 app.get('/userInfo', restrict, function(req, res){
 	User.findOne( {'username' : req.session.user.username}, function(err, user){
 		if(err){
@@ -360,6 +421,12 @@ app.get('/userInfo', restrict, function(req, res){
 	});
 });
 
+/*
+	/orgInfo takes in as a parameter orgname, example shown below. It will return the organization information based. 
+	returns a json object with a success flag. If true the object contains the organization named org.
+	
+	ex) /orgInfo?orgname=TestOrg
+*/
 app.get('/orgInfo', function(req, res){
 	Org.findOne({'orgname' : req.params.orgname}, function(err, org){
 		if(err){
