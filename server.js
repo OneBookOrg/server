@@ -16,6 +16,7 @@ var debug = false;
 
 mongoose.connect('mongodb://localhost/OneBookDB');
 
+//session setup
 app.use(session({
 	secret : 'shhh, secret',
 	resave : true,
