@@ -16,7 +16,7 @@ var debug = false;
 
 mongoose.connect('mongodb://localhost/OneBookDB');
 
-//session setup
+//session setup 
 app.use(session({
 	secret : 'shhh, secret',
 	resave : true,
@@ -30,6 +30,7 @@ app.use(bodyParser.urlencoded({
   extended: true
 }));
 
+//require mongo models
 require(__dirname+ '/models/users.js');
 require(__dirname+'/models/organizations.js');
 var User = mongoose.model('users');
