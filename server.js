@@ -20,8 +20,8 @@ app.use(session({
 	secret : 'shhh, secret',
 	resave : true,
 	saveUninitialized : true,
-    store: new MongoStore({ mongooseConnection: mongoose.connection }),
-    cookie: { maxAge: 604800000 }
+	store: new MongoStore({ mongooseConnection: mongoose.connection }),
+	cookie: { maxAge: 604800000 }
 }));
 
 app.use(bodyParser.json());
@@ -88,7 +88,7 @@ function restrict(req, res, next) {
   		success : false,
   		errMessage : "Access Denied.",
   		redirect : "/index.html"
-  	})
+  	});
     //res.json({error_message: "Access denied!", cookieValid : false});
     return;
   }
@@ -131,13 +131,14 @@ app.post('/register', function(req, res){
 				return;
 			}
 			req.session.regenerate(function(){
-	            req.session.user = user
-	            console.log(user.username + " Has been successfully registered")
+				req.session.user = user
+				console.log(user.username + " Has been successfully registered")
 				res.json({
 					success : true
 				});
-        	});
-			
+
+       });
+
 		});
 	});
 
@@ -166,21 +167,20 @@ app.post('/login', function(req, res){
 	authenticate(req.body.username.toLowerCase(), req.body.password, function(err, user){
 		if(user){
 			req.session.regenerate(function(){
-		        req.session.user = user;
-		        res.json({
-		        	success : true
-		        });
-		        console.log("Auth success for '%s'", user.username);
-      		});
+				req.session.user = user;
+				res.json({
+					success : true
+				});
+				console.log("Auth success for '%s'", user.username);
+			});
 		}
 		else{
-			req.session.error = 'Authentication failed, please check your '
-        + ' username and password.';
-        	res.json({
-        		success : false,
-        		errMessage : 'Authentication failed'
-        	});
-        	//return;
+			req.session.error = 'Authentication failed, please check your '+' username and password.';
+			res.json({
+				success : false,
+				errMessage : 'Authentication failed'
+			});
+			//return;
 		}
 	});
 })
@@ -247,8 +247,10 @@ app.post('/createOrg', restrict, function(req, res){
 		org.passwordProt = true;
 		tempSalt = org.create_date.toString().replace(/\s+/g, '');
 		hash(req.body.password, tempSalt, function(err, hash){
-			if(err) return err;
-				org.hashcode = hash.toString('hex');
+			if(err){ 
+				return err;
+			}
+			org.hashcode = hash.toString('hex');
 
 			org.save(function(err){
 				if(err){
